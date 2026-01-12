@@ -16,16 +16,23 @@ function clearCanvas() {
 
 // Step 2 drawVector(v, color) using lineTo, scale by 20, origin at center
 function drawVector(v, color) {
-  const scale = 20;
-  const cx = canvas.width / 2;
-  const cy = canvas.height / 2;
+  const canvas = document.getElementById('example');
+  const ctx = canvas.getContext('2d');
 
   ctx.strokeStyle = color;
-  ctx.lineWidth = 3;
+  ctx.lineWidth = 2;
 
   ctx.beginPath();
-  ctx.moveTo(cx, cy);
-  ctx.lineTo(cx + v.elements[0] * scale, cy - v.elements[1] * scale);
+
+  // START AT CENTER OF CANVAS
+  ctx.moveTo(200, 200);
+
+  // DRAW VECTOR (scaled by 20)
+  ctx.lineTo(
+    200 + v.elements[0] * 20,
+    200 - v.elements[1] * 20   // subtract because canvas y goes DOWN
+  );
+
   ctx.stroke();
 }
 
