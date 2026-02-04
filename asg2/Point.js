@@ -1,5 +1,3 @@
-// Point (sqaure class) 
-
 class Point {
     constructor() {
       this.type = "POINT";
@@ -19,7 +17,7 @@ class Point {
   
       const half = (this.size * 2.0 / canvas.width) / 2.0; // == size / canvas.width
   
-      //square (2 triangles)
+      //square
       drawTriangle([
         x - half, y - half,
         x + half, y - half,

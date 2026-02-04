@@ -1,5 +1,3 @@
-//triangle class
-
 class Triangle {
     constructor() {
       this.type = "TRIANGLE";

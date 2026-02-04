@@ -1,9 +1,9 @@
 let canvas, gl;
 let a_Position, u_FragColor, u_ModelMatrix, u_GlobalRotation, u_ProjectionMatrix;
 
-let gThighAngle = 0;   // joint 1
-let gCalfAngle  = 0;   // joint 2
-let gFootAngle  = 0;   // joint 3 (for “third level joint” credit)
+let gThighAngle = 0;   
+let gCalfAngle  = 0;   
+let gFootAngle  = 0;   
 let gAnimalGlobalRotation = 0;
 
 //animation globals
@@ -23,7 +23,7 @@ let g_poke = false;
 let g_pokeTimer = 0;
 let g_headTilt = 0;
 
-// fs globals
+// fps globals
 let g_frameCount = 0;
 let g_lastFPSUpdate = performance.now();
 
@@ -87,7 +87,7 @@ function drawHindLeg(xSide) {
   }
   
 
-//rotation function------------
+//render function
 function renderScene() {
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
@@ -134,8 +134,8 @@ function renderScene() {
   //nose
   let nose = new Sphere();
   nose.matrix.setIdentity();
-  nose.color = [1.0, 0.6, 0.7, 1.0]; // pink
-  nose.matrix.translate(0, 0.39 + bodyLift, 0.70); // slightly forward from head
+  nose.color = [1.0, 0.6, 0.7, 1.0]; 
+  nose.matrix.translate(0, 0.39 + bodyLift, 0.70); 
   nose.matrix.scale(0.07, 0.07, 0.07);
   nose.render();
 

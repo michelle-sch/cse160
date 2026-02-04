@@ -1,4 +1,3 @@
-// ===== Shared cube buffer =====
 let cubeBuffer = null;
 
 class Cube {
@@ -13,7 +12,6 @@ class Cube {
     }
     console.log("Cube.render called", gl, a_Position);
 
-    // Set uniforms
     gl.uniformMatrix4fv(u_ModelMatrix, false, this.matrix.elements);
     gl.uniform4f(
       u_FragColor,
@@ -23,12 +21,10 @@ class Cube {
       this.color[3]
     );
 
-    // Bind buffer + attribute
     gl.bindBuffer(gl.ARRAY_BUFFER, cubeBuffer);
     gl.vertexAttribPointer(a_Position, 3, gl.FLOAT, false, 0, 0);
     gl.enableVertexAttribArray(a_Position);
 
-    // Draw cube (12 triangles)
     gl.drawArrays(gl.TRIANGLES, 0, 36);
   }
 }
