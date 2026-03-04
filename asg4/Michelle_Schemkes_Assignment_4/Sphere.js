@@ -31,7 +31,7 @@ class Sphere {
           const z = sinPhi * sinTheta;
   
           positions.push(x, y, z);
-          normals.push(x, y, z); 
+          normals.push(x, y, z);  // add this line
         
           const u = lon / slices;
           const v = lat / stacks;

@@ -1,6 +1,6 @@
 let g_cubePosBuffer = null;
 let g_cubeUVBuffer = null;
-let g_cubeNormalBuffer = null; 
+let g_cubeNormalBuffer = null;  // add alongside the other buffer globals
 const g_cubeVertCount = 36;
 
 function initCubeVBO() {
@@ -110,6 +110,7 @@ class Cube {
   render() {
     // uniforms
     gl.uniformMatrix4fv(u_ModelMatrix, false, this.matrix.elements);
+    // normal matrix = inverse-transpose of the world transform (globalRot * model)
     let worldMat = new Matrix4(g_globalRotMat);
     worldMat.multiply(this.matrix);
 

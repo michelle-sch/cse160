@@ -57,13 +57,13 @@ let u_CameraPos;
 
 let g_globalRotMat = new Matrix4(); 
 
-let g_lightColor = [1.0, 1.0, 1.0]; 
+let g_lightColor = [1.0, 1.0, 1.0]; // white by default
 let u_LightColor;
 
 let g_spotOn = true;
 let u_SpotOn, u_SpotDir, u_SpotCutoff;
 let g_spotPos = [0, 3, 0];
-let g_spotDir = [0, -1, 0]; 
+let g_spotDir = [0, -1, 0]; // pointing straight down
 
 let g_humanModel = null;
 
@@ -77,8 +77,8 @@ const VSHADER_SOURCE = `
   uniform mat4 u_ViewMatrix;
   uniform mat4 u_GlobalRotation;
   uniform mat4 u_ProjectionMatrix;
-  attribute vec3 a_Normal;
-  varying vec3 v_Normal;  
+  attribute vec3 a_Normal;   // add this
+  varying vec3 v_Normal;     // add this
   uniform mat4 u_NormalMatrix;
 
   void main() {
@@ -100,14 +100,14 @@ const FSHADER_SOURCE = `
   uniform vec4 u_FragColor;
   uniform sampler2D u_Sampler0;
   uniform sampler2D u_Sampler1;
-  uniform sampler2D u_Sampler2;
+  uniform sampler2D u_Sampler2;  // NEW: third texture
   uniform int u_whichTexture;
   varying vec2 v_UV;
   varying vec3 v_Normal;
   varying vec3 v_VertPos;
   uniform vec3 u_LightPos;
   uniform vec3 u_CameraPos;
-  uniform bool u_LightOn; 
+  uniform bool u_LightOn;   // NEW
   uniform vec3 u_LightColor;
   uniform bool u_SpotOn;
   uniform vec3 u_SpotDir;
@@ -115,9 +115,12 @@ const FSHADER_SOURCE = `
 
   void main() {
     if (u_CameraPos.x > 999999.0) { gl_FragColor = vec4(1,0,1,1); return; }
+
+    // -------- Base color (same logic as before) --------
     vec4 baseColor;
   
     if (u_whichTexture == -3) {
+      // Normal visualization (do NOT apply lighting)
       gl_FragColor = vec4((v_Normal + 1.0) / 2.0, 1.0);
       return;
     } else if (u_whichTexture == -2) {
@@ -136,24 +139,26 @@ const FSHADER_SOURCE = `
       baseColor = vec4(1.0, 0.2, 0.2, 1.0);
     }
 
-    // If lighting is off, show baseColor only 
+    // If lighting is off, show baseColor only (no ambient/diffuse/specular)
     if (!u_LightOn) {
     gl_FragColor = baseColor;
     return;
     }
   
+    // -------- B) Diffuse (N·L) --------
     vec3 N = normalize(v_Normal);
-    vec3 L = normalize(u_LightPos - v_VertPos); 
+    vec3 L = normalize(u_LightPos - v_VertPos);   // vertex -> light
+  
     float nDotL = max(dot(N, L), 0.0);
     vec3 diffuse = baseColor.rgb * nDotL * u_LightColor;
   
-   
+    // -------- B) Ambient --------
     float ambientStrength = 0.2;
     vec3 ambient = baseColor.rgb * ambientStrength;
   
-   
-    vec3 V = normalize(u_CameraPos - v_VertPos);  
-    vec3 R = reflect(-L, N);                     
+    // -------- C) Specular --------
+    vec3 V = normalize(u_CameraPos - v_VertPos);  // vertex -> camera
+    vec3 R = reflect(-L, N);                      // reflect wants incoming vector
   
     float specStrength = 0.5;
     float shininess = 10.0;
@@ -161,7 +166,7 @@ const FSHADER_SOURCE = `
     float spec = pow(max(dot(V, R), 0.0), shininess);
     vec3 specular = vec3(u_LightColor * specStrength * spec);
   
-   
+    // -------- Spotlight contribution --------
     float spotEffect = 0.0;
     if (u_SpotOn) {
       vec3 spotL = normalize(u_LightPos - v_VertPos);
@@ -171,6 +176,7 @@ const FSHADER_SOURCE = `
       }
     }
 
+    // -------- Final --------
     vec3 color = ambient + diffuse + specular + (diffuse * spotEffect);
     gl_FragColor = vec4(color, baseColor.a);
   }
@@ -452,14 +458,14 @@ function renderScene() {
   globalRot.rotate(-1, 1, 0, 0);
   gl.uniformMatrix4fv(u_GlobalRotation, false, globalRot.elements);
 
-  g_globalRotMat.set(globalRot);  
+  g_globalRotMat.set(globalRot);  // save it so Cube/Sphere can compute normal matrices
   gl.uniform3f(u_LightPos, g_lightPos[0], g_lightPos[1], g_lightPos[2]);
   gl.uniform1i(u_LightOn, g_lightOn ? 1 : 0);
   gl.uniform3f(u_LightColor, g_lightColor[0], g_lightColor[1], g_lightColor[2]);
 
   gl.uniform1i(u_SpotOn, g_spotOn ? 1 : 0);
   gl.uniform3f(u_SpotDir, g_spotDir[0], g_spotDir[1], g_spotDir[2]);
-  gl.uniform1f(u_SpotCutoff, Math.cos(Math.PI / 8.0));
+  gl.uniform1f(u_SpotCutoff, Math.cos(Math.PI / 8.0)); // 22.5 degree cone
   
   if (u_CameraPos && camera && camera.eye) {
     gl.uniform3f(u_CameraPos,
