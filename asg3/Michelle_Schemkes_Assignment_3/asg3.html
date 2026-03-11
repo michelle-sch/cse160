@@ -46,7 +46,7 @@
 <body onload="main()">
   <div id="page">
     <p><b>Michelle Schemkes</b><br>mschemke@ucsc.edu</p>
-    <p><b>Notes to Grader:</b> 3D World with Sphere, Object, lighting</p>
+    <p><b>Notes to Grader:</b> 3D World with block building game</p>
 
     <canvas id="webgl" width="400" height="400"></canvas>
 
@@ -58,50 +58,6 @@
       <div id="fps" style="color:rgb(0, 0, 0)">FPS: -- </div>
       <hr>
       <div id="errorBox"></div>
-      <div class="row">
-        <span class="label">Normals:</span>
-        <button id="normOn" class="modeBtn">Normal Vis ON</button>
-        <button id="normOff" class="modeBtn">Normal Vis OFF</button>
-      </div>
-
-      <div class="row">
-        <span class="label">Lighting:</span>
-        <button id="lightOnBtn" class="modeBtn">Light ON</button>
-        <button id="lightOffBtn" class="modeBtn">Light OFF</button>
-      </div>
-
-      <div class="row">
-        <span class="label">Light X</span>
-        <input id="lightSlideX" class="slider wide" type="range" min="-10" max="10" value="2" step="0.1">
-        <span id="lightXVal">2</span>
-      </div>
-      
-      <div class="row">
-        <span class="label">Light Y</span>
-        <input id="lightSlideY" class="slider wide" type="range" min="-10" max="10" value="2" step="0.1">
-        <span id="lightYVal">2</span>
-      </div>
-      
-      <div class="row">
-        <span class="label">Light Z</span>
-        <input id="lightSlideZ" class="slider wide" type="range" min="-10" max="10" value="2" step="0.1">
-        <span id="lightZVal">2</span>
-      </div>
-
-      <div class="row">
-        <span class="label">Light Color</span>
-        <input id="lightColorR" class="slider" type="range" min="0" max="1" value="1" step="0.01">
-        <span class="label">R</span>
-        <input id="lightColorG" class="slider" type="range" min="0" max="1" value="1" step="0.01">
-        <span class="label">G</span>
-        <input id="lightColorB" class="slider" type="range" min="0" max="1" value="1" step="0.01">
-        <span class="label">B</span>
-      </div>
-      <div class="row">
-        <span class="label">Spotlight:</span>
-        <button id="spotOnBtn" class="modeBtn">Spotlight ON</button>
-        <button id="spotOffBtn" class="modeBtn">Spotlight OFF</button>
-      </div>
     </div>
   </div>
 
@@ -109,11 +65,11 @@
   <script src="webgl-utils.js"></script>
   <script src="cuon-utils.js"></script>
   <script src="cuon-matrix.js"></script>
-  <script src="Model.js"></script>
+
   <script src="Cube.js"></script>
   <script src="Triangle.js"></script>
   <script src="Sphere.js"></script>
   <script src="Camera.js"></script>
-  <script src="asg4.js"></script>
+  <script src="asg3.js"></script>
 </body>
 </html>

@@ -1,7 +1,6 @@
 let canvas, gl;
-let a_Position, u_FragColor, u_ModelMatrix, u_GlobalRotation, u_ProjectionMatrix, u_NormalMatrix;
-let a_UV, a_Normal;
-let g_normalsOn = false;  
+let a_Position, u_FragColor, u_ModelMatrix, u_GlobalRotation, u_ProjectionMatrix;
+let a_UV;
 let u_Sampler0;
 let u_Sampler1;
 let u_Sampler2;
@@ -39,58 +38,19 @@ let g_lastFPSUpdate = performance.now();
 let g_bunnyFound = false;
 let g_gameMessage = "Find the bunny! (Press F when close)";
 
-let u_LightPos;
-let g_lightPos = [2, 2, 2];
-
-let g_lightOn = true;  
-let u_LightOn;   
-
-let g_lightAnimate = true;
-let g_lightAnimSpeed = 1.0;
-let g_lightAnimRadius = 3.0;
-let g_lightAnimCenter = [0, 2.0, 0];
-
-let g_lightOrbitCenter = [1, -0.6, 0]; 
-let g_lightOrbitRadius = 2.0;
-
-let u_CameraPos;
-
-let g_globalRotMat = new Matrix4(); 
-
-let g_lightColor = [1.0, 1.0, 1.0]; 
-let u_LightColor;
-
-let g_spotOn = true;
-let u_SpotOn, u_SpotDir, u_SpotCutoff;
-let g_spotPos = [0, 3, 0];
-let g_spotDir = [0, -1, 0]; 
-
-let g_humanModel = null;
-
 //vertex shader
 const VSHADER_SOURCE = `
   attribute vec4 a_Position;
   attribute vec2 a_UV;
   varying vec2 v_UV; 
-  varying vec3 v_VertPos;
   uniform mat4 u_ModelMatrix;
   uniform mat4 u_ViewMatrix;
   uniform mat4 u_GlobalRotation;
   uniform mat4 u_ProjectionMatrix;
-  attribute vec3 a_Normal;
-  varying vec3 v_Normal;  
-  uniform mat4 u_NormalMatrix;
 
   void main() {
     gl_Position = u_ProjectionMatrix * u_ViewMatrix * u_GlobalRotation * u_ModelMatrix * a_Position;
     v_UV = a_UV;
-
-    // world position must match the same "world transform" used for drawing:
-    vec4 worldPos = u_GlobalRotation * u_ModelMatrix * a_Position;
-    v_VertPos = worldPos.xyz;
-
-    // normals must be transformed with the normal matrix:
-    v_Normal = normalize((u_NormalMatrix * vec4(a_Normal, 0.0)).xyz);
 }
 `;
 
@@ -100,117 +60,26 @@ const FSHADER_SOURCE = `
   uniform vec4 u_FragColor;
   uniform sampler2D u_Sampler0;
   uniform sampler2D u_Sampler1;
-  uniform sampler2D u_Sampler2;
+  uniform sampler2D u_Sampler2;  // NEW: third texture
   uniform int u_whichTexture;
   varying vec2 v_UV;
-  varying vec3 v_Normal;
-  varying vec3 v_VertPos;
-  uniform vec3 u_LightPos;
-  uniform vec3 u_CameraPos;
-  uniform bool u_LightOn; 
-  uniform vec3 u_LightColor;
-  uniform bool u_SpotOn;
-  uniform vec3 u_SpotDir;
-  uniform float u_SpotCutoff;
-
+  
   void main() {
-    if (u_CameraPos.x > 999999.0) { gl_FragColor = vec4(1,0,1,1); return; }
-    vec4 baseColor;
-  
-    if (u_whichTexture == -3) {
-      gl_FragColor = vec4((v_Normal + 1.0) / 2.0, 1.0);
-      return;
-    } else if (u_whichTexture == -2) {
-      baseColor = u_FragColor;
+    if (u_whichTexture == -2) {
+      gl_FragColor = u_FragColor;
     } else if (u_whichTexture == -1) {
-      // UV debug (do NOT apply lighting)
       gl_FragColor = vec4(v_UV, 1.0, 1.0);
-      return;
     } else if (u_whichTexture == 0) {
-      baseColor = texture2D(u_Sampler0, v_UV);
+      gl_FragColor = texture2D(u_Sampler0, v_UV);
     } else if (u_whichTexture == 1) {
-      baseColor = texture2D(u_Sampler1, v_UV);
+      gl_FragColor = texture2D(u_Sampler1, v_UV);
     } else if (u_whichTexture == 2) {
-      baseColor = texture2D(u_Sampler2, v_UV);
+      gl_FragColor = texture2D(u_Sampler2, v_UV);  // NEW
     } else {
-      baseColor = vec4(1.0, 0.2, 0.2, 1.0);
+      gl_FragColor = vec4(1.0, 0.2, 0.2, 1.0);
     }
-
-    // If lighting is off, show baseColor only 
-    if (!u_LightOn) {
-    gl_FragColor = baseColor;
-    return;
-    }
-  
-    vec3 N = normalize(v_Normal);
-    vec3 L = normalize(u_LightPos - v_VertPos); 
-    float nDotL = max(dot(N, L), 0.0);
-    vec3 diffuse = baseColor.rgb * nDotL * u_LightColor;
-  
-   
-    float ambientStrength = 0.2;
-    vec3 ambient = baseColor.rgb * ambientStrength;
-  
-   
-    vec3 V = normalize(u_CameraPos - v_VertPos);  
-    vec3 R = reflect(-L, N);                     
-  
-    float specStrength = 0.5;
-    float shininess = 10.0;
-  
-    float spec = pow(max(dot(V, R), 0.0), shininess);
-    vec3 specular = vec3(u_LightColor * specStrength * spec);
-  
-   
-    float spotEffect = 0.0;
-    if (u_SpotOn) {
-      vec3 spotL = normalize(u_LightPos - v_VertPos);
-      float angle = dot(normalize(-spotL), normalize(u_SpotDir));
-      if (angle > u_SpotCutoff) {
-        spotEffect = pow(angle, 8.0);
-      }
-    }
-
-    vec3 color = ambient + diffuse + specular + (diffuse * spotEffect);
-    gl_FragColor = vec4(color, baseColor.a);
   }
 `;
-
-function addActionsForHtmlUI_PA4() {
-    document.getElementById('normOn').onclick  = () => { g_normalsOn = true; };
-    document.getElementById('normOff').onclick = () => { g_normalsOn = false; };
-  
-    document.getElementById('lightOnBtn').onclick  = () => { g_lightOn = true;  renderScene(); };
-    document.getElementById('lightOffBtn').onclick = () => { g_lightOn = false; renderScene(); };
-
-    document.getElementById('lightSlideX').oninput = (ev) => {
-      g_lightAnimate = false;
-      g_lightPos[0] = Number(ev.target.value);
-      document.getElementById('lightXVal').innerText = ev.target.value;
-      renderScene();
-    };
-  
-    document.getElementById('lightSlideY').oninput = (ev) => {
-      g_lightAnimate = false;
-      g_lightPos[1] = Number(ev.target.value);
-      document.getElementById('lightYVal').innerText = ev.target.value;
-      renderScene();
-    };
-  
-    document.getElementById('lightSlideZ').oninput = (ev) => {
-      g_lightAnimate = false;
-      g_lightPos[2] = Number(ev.target.value);
-      document.getElementById('lightZVal').innerText = ev.target.value;
-      renderScene();
-    };
-
-    document.getElementById('lightColorR').oninput = (ev) => { g_lightColor[0] = Number(ev.target.value); };
-    document.getElementById('lightColorG').oninput = (ev) => { g_lightColor[1] = Number(ev.target.value); };
-    document.getElementById('lightColorB').oninput = (ev) => { g_lightColor[2] = Number(ev.target.value); };
-
-    document.getElementById('spotOnBtn').onclick  = () => { g_spotOn = true; };
-    document.getElementById('spotOffBtn').onclick = () => { g_spotOn = false; };
-  }
 
 function drawHindLeg(xSide) {
     // thigh
@@ -286,9 +155,9 @@ setBorder(4);
 
 
 // Maze walls
-//setRect(15, 15, 15, 25, 2);
-//setRect(10, 18, 20, 18, 2);
-//setRect(18, 10, 18, 20, 3); 
+setRect(15, 15, 15, 25, 2);
+setRect(10, 18, 20, 18, 2);
+setRect(18, 10, 18, 20, 3); 
 
 // Corner towers
 g_map[5][5] = 5;    // Tower 1
@@ -297,17 +166,17 @@ g_map[26][5] = 5;   // Tower 3
 g_map[26][26] = 5;  // Tower 4
 
 // Pyramid area
-//setRect(23, 23, 25, 25, 1);
-//setRect(24, 24, 24, 24, 2);
+setRect(23, 23, 25, 25, 1);
+setRect(24, 24, 24, 24, 2);
 
 // House structure
-//setRect(14, 3, 18, 7, 3);   // House walls
-//setRect(15, 4, 17, 6, 0);   // Hollow inside
-//g_map[16][3] = 0;            // Door opening
+setRect(14, 3, 18, 7, 3);   // House walls
+setRect(15, 4, 17, 6, 0);   // Hollow inside
+g_map[16][3] = 0;            // Door opening
 
 // Low walls creating paths
-//setRect(8, 20, 12, 20, 1);
-//setRect(20, 12, 20, 16, 1);
+setRect(8, 20, 12, 20, 1);
+setRect(20, 12, 20, 16, 1);
 
 
 function drawMap() {
@@ -452,58 +321,25 @@ function renderScene() {
   globalRot.rotate(-1, 1, 0, 0);
   gl.uniformMatrix4fv(u_GlobalRotation, false, globalRot.elements);
 
-  g_globalRotMat.set(globalRot);  
-  gl.uniform3f(u_LightPos, g_lightPos[0], g_lightPos[1], g_lightPos[2]);
-  gl.uniform1i(u_LightOn, g_lightOn ? 1 : 0);
-  gl.uniform3f(u_LightColor, g_lightColor[0], g_lightColor[1], g_lightColor[2]);
-
-  gl.uniform1i(u_SpotOn, g_spotOn ? 1 : 0);
-  gl.uniform3f(u_SpotDir, g_spotDir[0], g_spotDir[1], g_spotDir[2]);
-  gl.uniform1f(u_SpotCutoff, Math.cos(Math.PI / 8.0));
-  
-  if (u_CameraPos && camera && camera.eye) {
-    gl.uniform3f(u_CameraPos,
-      camera.eye.elements[0],
-      camera.eye.elements[1],
-      camera.eye.elements[2]
-    );
-
-  if (g_humanModel) g_humanModel.render();
-  }
-
   // GROUND
   let ground = new Cube();
-  ground.textureNum = g_normalsOn ? -3 : -2;
+  ground.textureNum = -2;
   ground.color = [0.2, 0.4, 0.2, 1];
   ground.matrix.setIdentity();
   ground.matrix.translate(0, -1.6, 0);
-  ground.matrix.scale(100, 0.01, 100);
+  ground.matrix.scale(100, 0, 100);
   ground.render();
 
   // SKY BOX
   let sky = new Cube();
-  sky.textureNum = g_normalsOn ? -3 : 1;
+  sky.textureNum = 1;
   sky.color = [1, 1, 1, 1];
   sky.matrix.setIdentity();
   sky.matrix.scale(50, 50, 50);
   sky.render();
 
-  let sphere = new Sphere();
-  sphere.color = [1,1,1,1];
-  sphere.matrix.translate(1, -0.6, 0);
-  sphere.matrix.scale(0.5, 0.5, 0.5);
-  sphere.render();
   drawMap();
   drawBunny(5, -1.5, 5); 
-
-
-  let light = new Cube();
-  light.textureNum = -2; // color mode
-  light.color = [10, 10, 0, 1]; // super bright yellow like the video
-  light.matrix.setIdentity();
-  light.matrix.translate(g_lightPos[0], g_lightPos[1], g_lightPos[2]);
-  light.matrix.scale(-0.3, -0.3, -0.3);
-  light.render();
 }
 
 function updateAnimationAngles() {
@@ -520,12 +356,6 @@ function tick() {
     g_seconds += (now - g_lastFrameTime) / 1000.0;
     g_lastFrameTime = now;
   
-    if (g_lightAnimate) {
-        g_lightPos[0] = g_lightOrbitCenter[0] + g_lightOrbitRadius * Math.cos(g_seconds);
-        g_lightPos[2] = g_lightOrbitCenter[2] + g_lightOrbitRadius * Math.sin(g_seconds);
-        g_lightPos[1] = g_lightOrbitCenter[1] + 1.0;  // keep it above the sphere a bit
-   }
-
     if (g_animationOn) {
       updateAnimationAngles();
     }
@@ -941,25 +771,16 @@ function main() {
 
   a_Position = gl.getAttribLocation(gl.program, 'a_Position');
   a_UV = gl.getAttribLocation(gl.program, 'a_UV');
-  a_Normal = gl.getAttribLocation(gl.program, 'a_Normal');
   u_FragColor = gl.getUniformLocation(gl.program, 'u_FragColor');
   u_ModelMatrix = gl.getUniformLocation(gl.program, 'u_ModelMatrix');
   u_ViewMatrix = gl.getUniformLocation(gl.program, 'u_ViewMatrix');
   u_GlobalRotation = gl.getUniformLocation(gl.program, 'u_GlobalRotation');
   u_ProjectionMatrix = gl.getUniformLocation(gl.program, 'u_ProjectionMatrix');
-  u_NormalMatrix = gl.getUniformLocation(gl.program, 'u_NormalMatrix');
   u_Sampler0 = gl.getUniformLocation(gl.program, 'u_Sampler0');
   u_Sampler1 = gl.getUniformLocation(gl.program, 'u_Sampler1');
   u_Sampler2 = gl.getUniformLocation(gl.program, 'u_Sampler2');
   u_whichTexture = gl.getUniformLocation(gl.program, 'u_whichTexture');
-  u_LightPos = gl.getUniformLocation(gl.program, 'u_LightPos');
-  u_CameraPos = gl.getUniformLocation(gl.program, 'u_CameraPos');
-  u_LightOn = gl.getUniformLocation(gl.program, 'u_LightOn');
-  u_LightColor = gl.getUniformLocation(gl.program, 'u_LightColor');
-  u_SpotOn = gl.getUniformLocation(gl.program, 'u_SpotOn');
-  u_SpotDir = gl.getUniformLocation(gl.program, 'u_SpotDir');
-  u_SpotCutoff = gl.getUniformLocation(gl.program, 'u_SpotCutoff');
-
+  
   console.log('a_Position:', a_Position);
   console.log('a_UV:', a_UV);
   console.log('u_FragColor:', u_FragColor);
@@ -968,11 +789,6 @@ function main() {
   console.log('u_ProjectionMatrix:', u_ProjectionMatrix);
   console.log('u_Sampler0:', u_Sampler0);
   
-  if (u_CameraPos === null) { 
-    showError("Failed to get u_CameraPos"); 
-    return; 
-  }
-
   if (a_Position < 0) {
     showError("Failed to get a_Position");
     return;
@@ -984,11 +800,6 @@ function main() {
 
   if (u_whichTexture === null) {
     showError("Failed to get u_whichTexture");
-    return;
-  }
-
-  if (u_LightPos === null) {
-    showError("Failed to get u_LightPos");
     return;
   }
 
@@ -1021,23 +832,11 @@ function main() {
     return;
   }
   //addActionsForHtmlUI_PA2();
-  addActionsForHtmlUI_PA4();
   initTextures();
   initTexture1();
   initTexture2();
 
   initCubeVBO();
-
-  fetch('human.obj')
-  .then(r => r.text())
-  .then(text => {
-    g_humanModel = new Model();
-    g_humanModel.parseOBJ(text);
-    g_humanModel.color = [0.8, 0.6, 0.5, 1.0];
-    g_humanModel.matrix.setIdentity();
-    g_humanModel.matrix.translate(3, -1, 0);
-    g_humanModel.matrix.scale(0.5, 0.5, 0.5);
-  });
 
   requestAnimationFrame(tick);
 }

@@ -1,6 +1,5 @@
 let g_cubePosBuffer = null;
 let g_cubeUVBuffer = null;
-let g_cubeNormalBuffer = null; 
 const g_cubeVertCount = 36;
 
 function initCubeVBO() {
@@ -55,26 +54,6 @@ function initCubeVBO() {
     0,0,  1,0,  1,1,
     0,0,  1,1,  0,1,
   ]);
-  const N = new Float32Array([
-    // Front  (z+)
-     0, 0, 1,   0, 0, 1,   0, 0, 1,
-     0, 0, 1,   0, 0, 1,   0, 0, 1,
-    // Back   (z-)
-     0, 0,-1,   0, 0,-1,   0, 0,-1,
-     0, 0,-1,   0, 0,-1,   0, 0,-1,
-    // Left   (x-)
-    -1, 0, 0,  -1, 0, 0,  -1, 0, 0,
-    -1, 0, 0,  -1, 0, 0,  -1, 0, 0,
-    // Right  (x+)
-     1, 0, 0,   1, 0, 0,   1, 0, 0,
-     1, 0, 0,   1, 0, 0,   1, 0, 0,
-    // Top    (y+)
-     0, 1, 0,   0, 1, 0,   0, 1, 0,
-     0, 1, 0,   0, 1, 0,   0, 1, 0,
-    // Bottom (y-)
-     0,-1, 0,   0,-1, 0,   0,-1, 0,
-     0,-1, 0,   0,-1, 0,   0,-1, 0,
-  ]);
 
   // Position buffer
   g_cubePosBuffer = gl.createBuffer();
@@ -91,9 +70,6 @@ function initCubeVBO() {
     console.error("Failed to create cube UV buffer");
     return;
   }
-  g_cubeNormalBuffer = gl.createBuffer();
-  gl.bindBuffer(gl.ARRAY_BUFFER, g_cubeNormalBuffer);
-  gl.bufferData(gl.ARRAY_BUFFER, N, gl.STATIC_DRAW);
   gl.bindBuffer(gl.ARRAY_BUFFER, g_cubeUVBuffer);
   gl.bufferData(gl.ARRAY_BUFFER, U, gl.STATIC_DRAW);
 
@@ -110,15 +86,6 @@ class Cube {
   render() {
     // uniforms
     gl.uniformMatrix4fv(u_ModelMatrix, false, this.matrix.elements);
-    let worldMat = new Matrix4(g_globalRotMat);
-    worldMat.multiply(this.matrix);
-
-    let normalMat = new Matrix4();
-    normalMat.setInverseOf(worldMat);
-    normalMat.transpose();
-
-    gl.uniformMatrix4fv(u_NormalMatrix, false, normalMat.elements);
-        
     gl.uniform4f(u_FragColor, this.color[0], this.color[1], this.color[2], this.color[3]);
     gl.uniform1i(u_whichTexture, this.textureNum);
 
@@ -131,10 +98,6 @@ class Cube {
     gl.bindBuffer(gl.ARRAY_BUFFER, g_cubeUVBuffer);
     gl.vertexAttribPointer(a_UV, 2, gl.FLOAT, false, 0, 0);
     gl.enableVertexAttribArray(a_UV);
-
-    gl.bindBuffer(gl.ARRAY_BUFFER, g_cubeNormalBuffer);
-    gl.vertexAttribPointer(a_Normal, 3, gl.FLOAT, false, 0, 0);
-    gl.enableVertexAttribArray(a_Normal);
 
     gl.drawArrays(gl.TRIANGLES, 0, g_cubeVertCount);
 

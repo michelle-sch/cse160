@@ -11,8 +11,6 @@ class Sphere {
   
     static initBuffer() {
       const positions = [];
-      const normals = [];
-      const uvs = [];
       const slices = 16;
       const stacks = 16;
   
@@ -31,12 +29,6 @@ class Sphere {
           const z = sinPhi * sinTheta;
   
           positions.push(x, y, z);
-          normals.push(x, y, z); 
-        
-          const u = lon / slices;
-          const v = lat / stacks;
-          uvs.push(u, v);
-
         }
       }
   
@@ -57,14 +49,6 @@ class Sphere {
       gl.bindBuffer(gl.ARRAY_BUFFER, Sphere.vertexBuffer);
       gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions), gl.STATIC_DRAW);
   
-      Sphere.normalBuffer = gl.createBuffer();
-      gl.bindBuffer(gl.ARRAY_BUFFER, Sphere.normalBuffer);
-      gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(normals), gl.STATIC_DRAW);
-
-      Sphere.uvBuffer = gl.createBuffer();
-      gl.bindBuffer(gl.ARRAY_BUFFER, Sphere.uvBuffer);
-      gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(uvs), gl.STATIC_DRAW);
-
       Sphere.indexBuffer = gl.createBuffer();
       gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, Sphere.indexBuffer);
       gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(indices), gl.STATIC_DRAW);
@@ -72,15 +56,6 @@ class Sphere {
   
     render() {
         gl.uniformMatrix4fv(u_ModelMatrix, false, this.matrix.elements);
-        let worldMat = new Matrix4(g_globalRotMat);
-        worldMat.multiply(this.matrix);
-
-        let normalMat = new Matrix4();
-        normalMat.setInverseOf(worldMat);
-        normalMat.transpose();
-
-        gl.uniformMatrix4fv(u_NormalMatrix, false, normalMat.elements);
-                
         gl.uniform4fv(u_FragColor, this.color);
         gl.uniform1i(u_whichTexture, this.textureNum);
       
@@ -88,17 +63,10 @@ class Sphere {
         gl.vertexAttribPointer(a_Position, 3, gl.FLOAT, false, 0, 0);
         gl.enableVertexAttribArray(a_Position);
       
-        gl.bindBuffer(gl.ARRAY_BUFFER, Sphere.normalBuffer);
-        gl.vertexAttribPointer(a_Normal, 3, gl.FLOAT, false, 0, 0);
-        gl.enableVertexAttribArray(a_Normal);
-
-        // gl.bindBuffer(gl.ARRAY_BUFFER, Sphere.vertexBuffer);
-        // gl.vertexAttribPointer(a_UV, 2, gl.FLOAT, false, 12, 0);
-        // gl.enableVertexAttribArray(a_UV);       
-        // gl.vertexAttribPointer(a_UV, 2, gl.FLOAT, false, 0, 0);
-        // gl.enableVertexAttribArray(a_UV);
-
-        gl.bindBuffer(gl.ARRAY_BUFFER, Sphere.uvBuffer);
+        const dummyUVs = new Float32Array(Sphere.numIndices * 2).fill(0.5);
+        const uvBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, uvBuffer);
+        gl.bufferData(gl.ARRAY_BUFFER, dummyUVs, gl.STATIC_DRAW);
         gl.vertexAttribPointer(a_UV, 2, gl.FLOAT, false, 0, 0);
         gl.enableVertexAttribArray(a_UV);
       

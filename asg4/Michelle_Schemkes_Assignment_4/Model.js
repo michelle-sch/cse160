@@ -10,11 +10,10 @@ class Model {
       this.numVertices = 0;
     }
   
-    // Call this after gl is ready, passing the text content of the OBJ file
     parseOBJ(objText) {
-      const posArr = [];    // vec3 positions from "v" lines
-      const normArr = [];   // vec3 normals from "vn" lines
-      const uvArr = [];     // vec2 uvs from "vt" lines
+      const posArr = [];   
+      const normArr = [];  
+      const uvArr = [];    
   
       const outPos = [];
       const outNorm = [];
@@ -33,8 +32,8 @@ class Model {
           const parts = line.split(/\s+/);
           uvArr.push(parseFloat(parts[1]), parseFloat(parts[2]));
         } else if (line.startsWith('f ')) {
-          const parts = line.split(/\s+/).slice(1); // remove 'f'
-          // Triangulate faces (handles triangles and quads)
+          const parts = line.split(/\s+/).slice(1);
+          // Triangulate faces
           const faceVerts = parts.map(p => {
             const idx = p.split('/');
             return {
@@ -44,7 +43,7 @@ class Model {
             };
           });
   
-          // Fan triangulation for quads/polygons
+          // Fan triangulation 
           for (let i = 1; i < faceVerts.length - 1; i++) {
             const tri = [faceVerts[0], faceVerts[i], faceVerts[i + 1]];
             for (const vert of tri) {
@@ -60,7 +59,7 @@ class Model {
                   normArr[vert.vn * 3 + 2]
                 );
               } else {
-                outNorm.push(0, 1, 0); // fallback normal
+                outNorm.push(0, 1, 0);
               }
               if (uvArr.length > 0) {
                 outUV.push(uvArr[vert.vt * 2], uvArr[vert.vt * 2 + 1]);
